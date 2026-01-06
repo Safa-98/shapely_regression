@@ -8,6 +8,7 @@ used in the project.
 import os
 import numpy as np
 import pandas as pd
+from imblearn.over_sampling import RandomOverSampler
 
 
 def func_read_data(data_imp):
@@ -34,15 +35,22 @@ def func_read_data(data_imp):
         Target values
     """
     # Base directory for datasets
-    data_dir = "data"
+    # Get the directory where this file (data_loader.py) is located
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Go up one level to project root, then into data
+    data_dir = os.path.join(os.path.dirname(current_dir), "data")
+    
+    # Synthetic datasets (no oversampling applied)
+    synthetic_datasets = ["pure_pairwise_interaction", "pairwise_interaction", 
+                          "triplet_interaction", "mixed_interaction"]
 
     if data_imp == "banknotes":
         # Banknote authentication dataset - UCI
         file_path = os.path.join(data_dir, "data_banknotes.csv")
-        dataset = pd.read_csv(file_path, header=None)
+        dataset = pd.read_csv(file_path)
         vals = dataset.values
-        X = dataset.iloc[:, :-1]
-        y = vals[:, -1]
+        X = dataset.loc[:, dataset.columns != "authentic"]
+        y = vals[:, 4]
 
     elif data_imp == "transfusion":
         # Blood Transfusion Service Center Data Set dataset - UCI
@@ -95,16 +103,37 @@ def func_read_data(data_imp):
         dataset = pd.read_csv(file_path)
         X = dataset.loc[:, dataset.columns != "Class"]
         vals = dataset.values
-        y = vals[:, -1]
+        y = vals[:, -1] - 1
     
+    elif data_imp == "dados_covid_sbpo_atual":
+        # COVID SBPO dataset
+        file_path = os.path.join(data_dir, "dados_covid_sbpo_atual.csv")
+        dados = pd.read_csv(file_path)
+        dados = dados.dropna()
+        for ii in range(dados.shape[1]):
+            dados = dados[dados.iloc[:, ii] != "Inconclusivo"]
+        aux = []
+        for ii in range(dados.shape[0]):
+            if np.sum(dados.iloc[ii, 1:]) != 0:
+                aux.append(ii)
+        dados = dados.iloc[aux, :]
+        y = pd.to_numeric(dados["test_result"].replace({"Negativo": -1, "Positivo": 1}))
+        X = dados.drop(columns=["test_result"]) * 1
+
     elif data_imp == "pure_pairwise_interaction":
         # Pure pairwise interaction dataset
         file_path = os.path.join(data_dir, "pure_pairwise_interaction_dataset.csv")
-        dataset = pd.read_csv(file_path, skiprows=2)
+        dataset = pd.read_csv(file_path, comment='#', dtype=np.float64)
         X = dataset.iloc[:, :-1]
-        y = dataset.iloc[:, -1].values
+        y = dataset.iloc[:, -1]
+        return X, y  # Return early, no oversampling for synthetic
     
     else:
         raise ValueError(f"Unknown dataset: {data_imp}")
+
+    # Over-sampling for class balance (not applied to synthetic datasets)
+    if data_imp not in synthetic_datasets:
+        ros = RandomOverSampler(random_state=42)
+        X, y = ros.fit_resample(X, y)
 
     return X, y

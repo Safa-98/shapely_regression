@@ -36,26 +36,26 @@ project/
 │   │   ├── run_apds_experiment.py  # Main experiment script
 │   │   └── visualisation.py  # Pairwise interaction visualization
 │   │
-│   ├── Benchmark/            # Benchmark experiments
-│   │   ├── complexity.py     # Model complexity analysis
-│   │   ├── robustness.py     # Robustness evaluation
-│   │   ├── k_additivity.py   # K-additivity experiments
-│   │   └── XXX.py            # Additional experiments
-│   └── __init__.py
+│   └── benchmark/            # Benchmark experiments
+│       └── bootstrap_and_noise_robustness/
+│           └── robustness_k_add.py       # K-additivity analysis with noise/bootstrap
 │
 ├── utils/                    # Shared utilities
 │   ├── plotting.py           # Visualization helpers
 │   ├── data_loader.py        # Benchmark data loaders
-│   ├── metrics.py            # Evaluation metrics
-│   └── __init__.py
+│   └── metrics.py            # Evaluation metrics
 │
 ├── examples/                 # Example usage scripts
-│   └── __init__.py
+│   ├── comparison_example.py
+│   ├── plot_coefficients_example.py
+│   └── plot_interaction_matrix_example.py
 │
-├── results/                  # Experimental results
-│   └── noise_robustness/     # Noise robustness experiments
+├── results/                  # Experimental results (auto-generated)
+│   └── benchmark/
+│       ├── noise_robustness/ # Noise robustness results by dataset
+│       └── bootstrap/        # Bootstrap stability results by dataset
 │
-├── data/                     # Data directory
+├── data/                     # Data directory (git-ignored)
 ├── requirements.txt          # Python dependencies
 ├── setup.py                  # Package installation
 └── README.md                 # Project documentation
@@ -114,17 +114,24 @@ python -m examples.comparison_example
 Before running the examples, you need to place your datasets in the `data/` directory. The data loader expects the following files:
 
 - `data_apds.csv`: APDS dataset
-- `data_banknotes.csv`: Banknote authentication dataset
+- `data_banknotes.csv`: Banknote authentication dataset (with header: authentic column)
 - `transfusion.csv`: Blood Transfusion Service Center Data Set
 - `data_mammographic.data`: Mammographic mass dataset
 - `data_raisin.xlsx`: Raisin dataset
 - `data_rice.xlsx`: Rice (Commeo and Osmancik) dataset
 - `diabetes.csv`: Diabetes (PIMA) dataset
 - `data_skin.csv`: Skin segmentation dataset
+- `dados_covid_sbpo_atual.csv`: COVID SBPO dataset
 - `pure_pairwise_interaction_dataset.csv`: Pure pairwise interaction dataset
 
+**Note**: The data directory is git-ignored to prevent pushing large datasets to the repository.
 
-Copy these files from your original project to the `data/` directory.
+### Data Preprocessing
+
+The `data_loader.py` automatically applies:
+- **Class balancing** via `RandomOverSampler` for imbalanced datasets (not applied to synthetic datasets)
+- **Missing value handling** for specific datasets (e.g., COVID, mammographic)
+- **Data type conversions** as needed
 
 ## Usage
 
@@ -188,76 +195,79 @@ python examples/comparison_example.py
 python -m examples.comparison_example
 ```
 
-### K-additivity Analysis
+### K-additivity Analysis with Robustness Testing
+
+Run comprehensive k-additivity analysis with noise robustness and bootstrap stability:
 
 ```python
-from tests.k_additivity.k_additivity import direct_k_additivity_analysis, find_optimal_k
-from utils.visualization.plotting import plot_k_additivity_results
+import sys
+import os
+sys.path.append(os.path.abspath('.'))
 
-# Analyze k-additivity impact with game representation
-results_game = direct_k_additivity_analysis(
-    dataset_name="banknotes",
-    representation="game",
-    output_dir="results/"
+from paper_code.benchmark.bootstrap_and_noise_robustness.robustness_k_add import run_analysis_for_dataset
+
+# Run analysis for a single dataset
+results = run_analysis_for_dataset(
+    dataset="banknotes",
+    representation="shapley",
+    regularization="l2",
+    random_state=42
 )
 
-# Analyze k-additivity impact with Mobius representation
-results_mobius = direct_k_additivity_analysis(
-    dataset_name="banknotes",
-    representation="mobius",
-    output_dir="results/"
-)
-
-# Find optimal k value
-optimal_k_game, scores_game = find_optimal_k(results_game)
-optimal_k_mobius, scores_mobius = find_optimal_k(results_mobius)
-
-print(f"Optimal k for game representation: {optimal_k_game}")
-print(f"Optimal k for Mobius representation: {optimal_k_mobius}")
-
-# Plot results
-plot_k_additivity_results(
-    results_game,
-    plot_folder="results/",
-    dataset_name="banknotes",
-    representation="game"
-)
+# Results are saved to:
+# - results/benchmark/noise_robustness/banknotes/
+# - results/benchmark/bootstrap/banknotes/
 ```
 
-### Robustness Testing
+For multiple datasets:
 
 ```python
-from tests.robustness.robustness import test_model_robustness
-from utils.visualization.plotting import plot_model_performance_comparison, plot_noise_robustness
+datasets = ['banknotes', 'mammographic', 'diabetes']
 
-# Create models dictionary
-models = {
-    "Game (k=2)": model_game,
-    "Mobius (k=2)": model_mobius,
-    "Shapley (k=2)": model_shapley
-}
-
-# Test robustness
-robustness_results = test_model_robustness(
-    models=models,
-    X_test=X_test,
-    y_test=y_test,
-    feature_names=X.columns,
-    output_folder="results/"
-)
-
-# Plot results
-plot_model_performance_comparison(
-    robustness_results,
-    plot_folder="results/",
-    title="Model Performance Comparison"
-)
-
-plot_noise_robustness(
-    robustness_results,
-    plot_folder="results/"
-)
+for dataset in datasets:
+    run_analysis_for_dataset(
+        dataset=dataset,
+        representation="shapley",
+        regularization="l2"
+    )
 ```
+
+### Visualizing Results
+
+```python
+from paper_code.benchmark.bootstrap_and_noise_robustness.paper_plots_same_scale import main
+
+# Generate plots for a specific dataset
+main(dataset_name='banknotes')
+
+# Plots are saved to:
+# - results/benchmark/noise_robustness/banknotes/noise_robustness_scaled.png
+# - results/benchmark/bootstrap/banknotes/bootstrap_stability_scaled.png
+```
+
+### Understanding the Results
+
+The analysis generates:
+
+1. **CSV files** (`results.csv`) with metrics for each k value:
+   - Number of parameters
+   - Baseline accuracy
+   - Noise robustness (at 0.1, 0.2, 0.3 noise levels)
+   - Bootstrap stability (mean ± std)
+
+2. **Summary files** (`summary.txt`) with full results table
+
+3. **Plots**:
+   - Noise robustness vs k-additivity
+   - Bootstrap stability vs k-additivity
+   - Scaled versions for cross-dataset comparison
+
+### Key Features
+
+- **Automatic class balancing**: Uses `RandomOverSampler` to handle imbalanced datasets
+- **Noise robustness**: Tests model performance under Gaussian noise (scaled by feature std)
+- **Bootstrap stability**: Evaluates prediction consistency across bootstrap samples
+- **K-additivity sweep**: Analyzes all k values from 1 to n_features
 
 ## Visualization for Interpretability
 

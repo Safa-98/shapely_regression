@@ -1,0 +1,8 @@
+# Ignore all data files
+*
+
+# But keep this .gitignore file
+!.gitignore
+
+# Optionally keep README if you want to document expected data files
+!README.md
