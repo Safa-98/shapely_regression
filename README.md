@@ -1,0 +1,298 @@
+# Shapely Regression: Game-theoretic Extensions of Logistic Regression
+
+This repository provides an implementation of Shapley regression, a game-theoretic extension of logistic regression based on the Choquet integral. The framework is designed to model non-linear feature interactions while preserving the interpretability, efficiency, and statistical grounding of classical logistic regression.
+
+## Project Overview
+
+Traditional logistic regression assumes additive feature effects, limiting its ability to model interactions. This project extends logistic regression using the Choquet integral, enabling the model to represent pairwise and higher-order interactions in a principled, interpretable way.
+
+The proposed framework maintains a clear connection to classical regression while leveraging cooperative game theory to quantify feature importance and interactions.
+
+### Key Features
+
+- **Multiple Representation Bases**: Supports Game, Möbius, and Shapley representations of the Choquet integral. These bases are mathematically equivalent but offer distinct interpretability and sparsity properties.
+- **K-additivity Analysis**: Tools to study the trade-off between model complexity, interpretability, and predictive performance as a function of k-additivity.
+- **Robustness Testing**: Comprehensive framework for testing model robustness under various perturbations
+- **Visualization Tools**: Specialized visualization functions for each representation basis
+
+## Repository Structure
+
+```
+project/
+├── core/                    # Core Choquet and regression implementations
+│   ├── models/
+│   │   ├── choquet.py        # Choquet integral implementations
+│   │   └── regression.py     # ChoquisticRegression model
+│   └── __init__.py
+│
+├── paper_code/               # Code used for experiments in the paper
+│   ├── APDS/                 # APDS case study
+│   │   ├── models.py         # Model definitions
+│   │   ├── preprocess.py     # APDS data preprocessing
+│   │   ├── run_apds_experiment.py  # Main experiment script
+│   │   └── visualisation.py  # Pairwise interaction visualization
+│   │
+│   ├── Benchmark/            # Benchmark experiments
+│   │   ├── complexity.py     # Model complexity analysis
+│   │   ├── robustness.py     # Robustness evaluation
+│   │   ├── k_additivity.py   # K-additivity experiments
+│   │   └── XXX.py            # Additional experiments
+│   └── __init__.py
+│
+├── utils/                    # Shared utilities
+│   ├── plotting.py           # Visualization helpers
+│   ├── data_loader.py        # Benchmark data loaders
+│   ├── metrics.py            # Evaluation metrics
+│   └── __init__.py
+│
+├── examples/                 # Example usage scripts
+│   └── __init__.py
+│
+├── results/                  # Experimental results
+│   └── noise_robustness/     # Noise robustness experiments
+│
+├── data/                     # Data directory
+├── requirements.txt          # Python dependencies
+├── setup.py                  # Package installation
+└── README.md                 # Project documentation
+```
+
+## Mathematical Background
+
+The project is based on three different mathematical bases that are linearly related:
+
+1. **Game Representation**: The traditional representation of fuzzy measures with the caveat of having fewer restrictions such as monotonicity.
+2. **Möbius Representation**: An alternative representation that directly captures the interaction between features.
+3. **Shapley Representation**: A representation that uses the Shapley value and the pairwise interaction indices between features.
+
+Each representation has its own interpretability properties and is suitable for different types of analysis.
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/[anonymous]/shapely_regression.git
+cd shapely_regression
+```
+
+2. Install the package in development mode:
+```bash
+pip install -e .
+```
+
+3. Install additional dependencies if needed:
+```bash
+pip install -r requirements.txt
+```
+
+### Option 2: Use Without Installation
+
+If you prefer not to install the package, you can still run the scripts by adding the project root to your Python path:
+
+1. Clone the repository:
+```bash
+git clone https://github.com/[anonymous]/shapely_regression.git
+cd shapely_regression
+```
+
+2. Install required dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run scripts from the project root:
+```bash
+python -m examples.comparison_example
+```
+
+## Dataset Preparation
+
+Before running the examples, you need to place your datasets in the `data/` directory. The data loader expects the following files:
+
+- `data_banknotes.csv`: Banknote authentication dataset
+- `transfusion.csv`: Blood Transfusion Service Center Data Set
+- `data_mammographic.data`: Mammographic mass dataset
+- `data_raisin.xlsx`: Raisin dataset
+- `data_rice.xlsx`: Rice (Commeo and Osmancik) dataset
+- `diabetes.csv`: Diabetes (PIMA) dataset
+- `data_skin.csv`: Skin segmentation dataset
+- `pure_pairwise_interaction_dataset.csv`: Pure pairwise interaction dataset
+
+Copy these files from your original project to the `data/` directory.
+
+## Usage
+
+### Basic Example
+
+```python
+from core.models.regression import ChoquisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from utils.data_loader import func_read_data
+
+# Load data
+X, y = func_read_data("banknotes")
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Create and train model with game representation
+model_game = ChoquisticRegression(
+    representation="game",
+    k_add=2,
+    scale_data=True
+)
+model_game.fit(X_train, y_train)
+
+# Create and train model with Mobius representation
+model_mobius = ChoquisticRegression(
+    representation="mobius",
+    k_add=2,
+    scale_data=True
+)
+model_mobius.fit(X_train, y_train)
+
+# Create and train model with Shapley representation (k=2)
+model_shapley = ChoquisticRegression(
+    representation="shapley",
+    k_add=2,
+    scale_data=True
+)
+model_shapley.fit(X_train, y_train)
+
+# Evaluate models
+y_pred_game = model_game.predict(X_test)
+y_pred_mobius = model_mobius.predict(X_test)
+y_pred_shapley = model_shapley.predict(X_test)
+
+print(f"Game representation accuracy: {accuracy_score(y_test, y_pred_game):.4f}")
+print(f"Mobius representation accuracy: {accuracy_score(y_test, y_pred_mobius):.4f}")
+print(f"Shapley representation accuracy: {accuracy_score(y_test, y_pred_shapley):.4f}")
+```
+
+### Running the Example Script
+
+The repository includes an example script that demonstrates the use of different representations:
+
+```bash
+# If installed as a package (Option 1):
+python examples/comparison_example.py
+
+# If using without installation (Option 2):
+python -m examples.comparison_example
+```
+
+### K-additivity Analysis
+
+```python
+from tests.k_additivity.k_additivity import direct_k_additivity_analysis, find_optimal_k
+from utils.visualization.plotting import plot_k_additivity_results
+
+# Analyze k-additivity impact with game representation
+results_game = direct_k_additivity_analysis(
+    dataset_name="banknotes",
+    representation="game",
+    output_dir="results/"
+)
+
+# Analyze k-additivity impact with Mobius representation
+results_mobius = direct_k_additivity_analysis(
+    dataset_name="banknotes",
+    representation="mobius",
+    output_dir="results/"
+)
+
+# Find optimal k value
+optimal_k_game, scores_game = find_optimal_k(results_game)
+optimal_k_mobius, scores_mobius = find_optimal_k(results_mobius)
+
+print(f"Optimal k for game representation: {optimal_k_game}")
+print(f"Optimal k for Mobius representation: {optimal_k_mobius}")
+
+# Plot results
+plot_k_additivity_results(
+    results_game,
+    plot_folder="results/",
+    dataset_name="banknotes",
+    representation="game"
+)
+```
+
+### Robustness Testing
+
+```python
+from tests.robustness.robustness import test_model_robustness
+from utils.visualization.plotting import plot_model_performance_comparison, plot_noise_robustness
+
+# Create models dictionary
+models = {
+    "Game (k=2)": model_game,
+    "Mobius (k=2)": model_mobius,
+    "Shapley (k=2)": model_shapley
+}
+
+# Test robustness
+robustness_results = test_model_robustness(
+    models=models,
+    X_test=X_test,
+    y_test=y_test,
+    feature_names=X.columns,
+    output_folder="results/"
+)
+
+# Plot results
+plot_model_performance_comparison(
+    robustness_results,
+    plot_folder="results/",
+    title="Model Performance Comparison"
+)
+
+plot_noise_robustness(
+    robustness_results,
+    plot_folder="results/"
+)
+```
+
+## Visualization for Interpretability
+
+```python
+from utils.plotting import plot_coefficients, plot_interaction_matrix_2add
+
+# Plot model coefficients
+plot_coefficients(
+    feature_names=X.columns.tolist(),
+    all_coefficients=[model_shapley.coef_[0]],
+    plot_folder="results/",
+    k_add=2
+)
+
+# Plot interaction matrix for Shapley representation (2-additive model)
+plot_interaction_matrix_2add(
+    feature_names=X.columns.tolist(),
+    coefs=model_shapley.coef_[0],  # Coefficients from the fitted model
+    plot_folder="results/"
+)
+```
+
+## Troubleshooting
+
+### Import Errors
+
+If you encounter import errors like `ModuleNotFoundError: No module named 'core'`, try one of these solutions:
+
+1. **Install the package** (recommended):
+   ```bash
+   pip install -e .
+   ```
+
+2. **Run from the project root**:
+   ```bash
+   python -m examples.comparison_example
+   ```
+
+3. **Add the project root to your Python path** in your script:
+   ```python
+   import sys
+   import os
+   sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+   ```
