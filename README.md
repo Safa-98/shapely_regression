@@ -4,9 +4,13 @@ This repository provides an implementation of Shapley regression, a game-theoret
 
 ## Project Overview
 
-Traditional logistic regression assumes additive feature effects, limiting its ability to model interactions. This project extends logistic regression using the Choquet integral, enabling the model to represent pairwise and higher-order interactions in a principled, interpretable way.
+Traditional logistic regression assumes additive feature effects, which limits its ability to model interactions between variables. This project introduces **Shapley regression**, a principled extension of logistic regression based on the Choquet integral, designed to capture pairwise and higher-order feature interactions while preserving interpretability.
 
-The proposed framework maintains a clear connection to classical regression while leveraging cooperative game theory to quantify feature importance and interactions.
+The framework is motivated by application settings in which datasets are typically small, heterogeneous, and noisy. In such regimes, standard linear models fail to represent meaningful interaction patterns, while deep learning approaches often suffer from instability and limited interpretability. Shapley regression bridges this gap by explicitly modeling interactions in a structured and transparent manner, while maintaining the convexity and statistical grounding of classical regression models.
+
+At its core, Shapley regression replaces the linear predictor with a *k*-additive cooperative game. This formulation enables controlled interaction modeling with theoretical guarantees on model complexity and performance, allowing predictive power, robustness, and interpretability to be balanced through the choice of *k* and regularization.
+
+The repository provides both theoretical and empirical tools for analyzing these trade-offs, along with experimental pipelines demonstrating the applicability of Shapley regression to biomedical classification tasks and structured clinical data.
 
 ### Key Features
 
