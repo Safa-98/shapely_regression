@@ -172,9 +172,9 @@ def save_visualization_outputs(output_dir, all_coef_df, mean_coef_df, mean_main_
 if __name__ == "__main__":
     # Example: load features and models
     # Replace these paths with your project-specific paths
-    DATA_PATH = "data/.." #path to the data
+    DATA_PATH = "data/data_apds.csv" #path to the data
     MODEL_DIR = "results/..." #path to joblib file containing the model 
-    OUTPUT_DIR = "results/choquistic_visualization"
+    OUTPUT_DIR = "results/.." #path to save the coeffients and visualisation plots
 
     import pandas as pd
 

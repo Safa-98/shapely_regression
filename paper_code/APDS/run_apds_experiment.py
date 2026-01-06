@@ -14,7 +14,7 @@ from models import get_models
 from utils.metrics import compute_metrics, estimate_flops, model_size_mb
 
 
-DATA_PATH = "data/...." #path to data
+DATA_PATH = "data/data_apds.csv" #path to data
 OUTPUT_DIR = "results"
 RANDOM_STATE = 42
 
