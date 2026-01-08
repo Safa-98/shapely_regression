@@ -37,8 +37,11 @@ project/
 │   │   └── visualisation.py  # Pairwise interaction visualization
 │   │
 │   └── benchmark/            # Benchmark experiments
-│       └── bootstrap_and_noise_robustness/
-│           └── robustness_k_add.py       # K-additivity analysis with noise/bootstrap
+│       ├── bootstrap_and_noise_robustness/
+│       │   └── robustness_k_add.py       # K-additivity analysis with noise/bootstrap
+│       └── bounds/
+│           ├── validate_effective_dimension.py
+│           └── validate_stability_perturbation.py
 │
 ├── utils/                    # Shared utilities
 │   ├── plotting.py           # Visualization helpers
@@ -48,16 +51,22 @@ project/
 ├── examples/                 # Example usage scripts
 │   ├── comparison_example.py
 │   ├── plot_coefficients_example.py
-│   └── plot_interaction_matrix_example.py
+│   ├── plot_interaction_matrix_example.py
+│   ├── plot_k_additivity_example.py
+│   ├── plot_model_performance_comparison_example.py
+│   └── plot_noise_robustness_example.py
 │
 ├── results/                  # Experimental results (auto-generated)
+│   ├── APDS/
 │   └── benchmark/
+│       ├── bounds/
 │       ├── noise_robustness/ # Noise robustness results by dataset
 │       └── bootstrap/        # Bootstrap stability results by dataset
 │
 ├── data/                     # Data directory (git-ignored)
 ├── requirements.txt          # Python dependencies
 ├── setup.py                  # Package installation
+├── LICENSE
 └── README.md                 # Project documentation
 ```
 
